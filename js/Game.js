@@ -1,63 +1,72 @@
 class Game {
-  constructor() {
-
-  }
+  constructor() {}
 
   getState() {
-    var gameStateRef = database.ref('gameState');
+    var gameStateRef = database.ref("gameState");
     gameStateRef.on("value", function (data) {
       gameState = data.val();
-    })
-
+    });
   }
 
   update(state) {
-    database.ref('/').update({
-      gameState: state
+    database.ref("/").update({
+      gameState: state,
     });
   }
 
   async start() {
     if (gameState === 0) {
       player = new Player();
-      var playerCountRef = await database.ref('playerCount').once("value");
+      var playerCountRef = await database.ref("playerCount").once("value");
       if (playerCountRef.exists()) {
         playerCount = playerCountRef.val();
         player.getCount();
       }
-      form = new Form()
+      form = new Form();
       form.display();
     }
     this.createMaze();
     this.createDots();
+
     pac1 = createSprite(570, 625);
     pac1.addAnimation("pac1", pacl_ani);
     pac2 = createSprite(75, 625);
     pac2.addAnimation("pac2", pac2_ani);
 
     pacs = [pac1, pac2];
+    database
+      .ref("dots")
+      .on("value", (data) => {
+       var i = data.val();
+       dots[i].destroy();
+       database.ref("/").update({
+        i: 0,
+      });
+      })
+     
   }
 
-
   play() {
-    player.getCarsAtEnd()
+    player.getCarsAtEnd();
     form.hide();
 
     Player.getPlayerInfo();
 
     for (var i = 0; i < mazes.length; i++) {
-      pac1.bounceOff(mazes[i])
-      pac2.bounceOff(mazes[i])
+      pac1.bounceOff(mazes[i]);
+      pac2.bounceOff(mazes[i]);
     }
 
     if (allPlayers !== undefined) {
-      background(0)
-      imageMode(CENTER)
-      image(maze, width / 2, height / 2, width, height)
-      text(mouseX + ',' + mouseY, mouseX, mouseY);
-      text("score: "+score,100,680)
-      text("lives: "+lives,550,680)
-      // text("opponents scores: "+otherscore,320,680)
+      background(0);
+      imageMode(CENTER);
+      image(maze, width / 2, height / 2, width, height);
+      fill("yellow");
+      textSize(15);
+      text(mouseX + "," + mouseY, mouseX, mouseY);
+      text("score: " + score, 45, 680);
+      text("lives: " + lives, 550, 680);
+      text("opponents scores: " + otherscore, 265, 680);
 
       //var display_position = 100;
 
@@ -76,13 +85,11 @@ class Game {
         // x = x + 200;
         //use data form the database to display the cars in y direction
         if (index !== player.index) {
-
           pacs[index - 1].x = allPlayers[plr].x;
           pacs[index - 1].y = allPlayers[plr].y;
-          // otherscore = allPlayers[plr].score
+          otherscore = allPlayers[plr].score;
         }
         // console.log(index, player.index)
-
 
         if (index === player.index) {
           stroke(10);
@@ -93,95 +100,96 @@ class Game {
         //textSize(15);
         //text(allPlayers[plr].name + ": " + allPlayers[plr].distance, 120,display_position)
       }
-
     }
+    
     if (player.index === 1) {
-      for(var i = 0; i<dots.length ; i++){
-        if(pac1.isTouching(dots[i])){
-          dots[i].destroy()
-          score = score+10
+      for (var i = 0; i < dots.length; i++) {
+        if (pac1.isTouching(dots[i])) {
+          dots[i].destroy();
+          this.updateDots(i);
+          score = score + 10;
         }
-
+        player.score = score;
+        //player.update();
       }
     }
     if (player.index === 2) {
-      for(var i = 0; i<dots.length ; i++){
-        if(pac2.isTouching(dots[i])){
-          dots[i].destroy()
-          score = score+10
+      for (var i = 0; i < dots.length; i++) {
+        if (pac2.isTouching(dots[i])) {
+          dots[i].destroy();
+          this.updateDots(i);
+
+          score = score + 10;
         }
-        player.score =score
-        player.update()
+        player.score = score;
+        //player.update()
       }
     }
     if (player.index === 1) {
       if (keyIsDown(UP_ARROW) && player.index !== null) {
-        pac1.rotation = 90
+        pac1.rotation = 90;
 
-        pac1.y -= 10
+        pac1.y -= 10;
         //  player.y =pac1.y
         player.updateposition(pac1.x, pac1.y);
       }
       if (keyIsDown(LEFT_ARROW) && player.index !== null) {
-        pac1.rotation = 0
+        pac1.rotation = 0;
 
-        pac1.x -= 10
+        pac1.x -= 10;
         //player.x=pac1.x
         player.updateposition(pac1.x, pac1.y);
       }
       if (keyIsDown(DOWN_ARROW) && player.index !== null) {
-        pac1.rotation = 270
+        pac1.rotation = 270;
 
-        pac1.y += 10
+        pac1.y += 10;
         //player.y =pac1.y
 
         player.updateposition(pac1.x, pac1.y);
       }
       if (keyIsDown(RIGHT_ARROW) && player.index !== null) {
-        pac1.rotation = 180
-        pac1.x += 10
+        pac1.rotation = 180;
+        pac1.x += 10;
         //player.x=pac1.x
 
         player.updateposition(pac1.x, pac1.y);
+        player.update();
       }
     } else if (player.index === 2) {
       if (keyIsDown(UP_ARROW) && player.index !== null) {
-        pac2.rotation = 90
-        pac2.y -= 10
+        pac2.rotation = 90;
+        pac2.y -= 10;
         //player.y =pac2.y
         player.updateposition(pac2.x, pac2.y);
+        player.update();
       }
       if (keyIsDown(LEFT_ARROW) && player.index !== null) {
-        pac2.rotation = 0
+        pac2.rotation = 0;
 
-        pac2.x -= 10
+        pac2.x -= 10;
         //player.x=pac2.x
         player.updateposition(pac2.x, pac2.y);
+        player.update();
       }
       if (keyIsDown(DOWN_ARROW) && player.index !== null) {
-        pac2.rotation = 270
+        pac2.rotation = 270;
 
-        pac2.y += 10
+        pac2.y += 10;
         //player.y =pac2.y
 
         player.updateposition(pac2.x, pac2.y);
+        player.update();
       }
       if (keyIsDown(RIGHT_ARROW) && player.index !== null) {
-        pac2.rotation = 180
+        pac2.rotation = 180;
 
-        pac2.x += 10
+        pac2.x += 10;
         //player.x=pac2.x
 
         player.updateposition(pac2.x, pac2.y);
+        player.update();
       }
-    }
-
-    if (player.distance > 3860) {
-      gameState = 2;
-      carsAtEnd++;
-      player.rank = carsAtEnd
-      Player.updateCarsAtEnd(player.rank);
-      player.update()
     }
 
     drawSprites();
@@ -189,97 +197,97 @@ class Game {
 
   end() {
     console.log("Game Ended");
-    console.log(player.rank)
-    console.log(allPlayers)
+    console.log(player.rank);
+    console.log(allPlayers);
   }
   createDots() {
     for (var i = 70; i < 585; i = i + 50) {
-      var dot = createSprite(i, 135, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
-      dots.push(dot)
-      var dot = createSprite(i, 55, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      var dot = createSprite(i, 135, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
+      dots.push(dot);
+      var dot = createSprite(i, 55, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 200, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 200, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 625, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 625, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 565, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 565, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 505, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 505, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 444, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 444, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
-      var dot = createSprite(i, 320, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
+      dots.push(dot);
+      var dot = createSprite(i, 320, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
 
-      dots.push(dot)
+      dots.push(dot);
     }
     for (var i = 170; i < 475; i += 50) {
-      var dot = createSprite(i, 385, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
-      dots.push(dot)
-      
-      var dot = createSprite(i, 260, 10, 10)
-      dot.addImage(dots_img)
-      dot.scale = 2
-      dots.push(dot)
+      var dot = createSprite(i, 385, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
+      dots.push(dot);
+
+      var dot = createSprite(i, 260, 10, 10);
+      dot.addImage(dots_img);
+      dot.scale = 2;
+      dots.push(dot);
     }
-    var dot = createSprite(70, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
-    var dot = createSprite(170, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
-    var dot = createSprite(290, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
-    var dot = createSprite(350, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
-    var dot = createSprite(470, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
-    var dot = createSprite(570, 95, 10, 10)
-    dot.addImage(dots_img)
-      dot.scale = 2
-    dots.push(dot)
+    var dot = createSprite(70, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
+    var dot = createSprite(170, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
+    var dot = createSprite(290, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
+    var dot = createSprite(350, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
+    var dot = createSprite(470, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
+    var dot = createSprite(570, 95, 10, 10);
+    dot.addImage(dots_img);
+    dot.scale = 2;
+    dots.push(dot);
 
-    dots[41].visible = false
-    dots[42].visible = false
-    dots[47].visible = false
-    dots[44].visible = false
-    dots[46].visible = false
-    dots[55].visible = false
-    dots[39].visible = false
-    dots[77].visible = false
-    dots[13].visible = false
-
+    dots[41].visible = false;
+    dots[42].visible = false;
+    dots[47].visible = false;
+    dots[44].visible = false;
+    dots[46].visible = false;
+    dots[55].visible = false;
+    dots[39].visible = false;
+    dots[77].visible = false;
+    dots[13].visible = false;
+    // this.updateDots();
   }
   createMaze() {
     maze1 = createSprite(325, 30, 585, 10);
@@ -335,15 +343,71 @@ class Game {
     maze51 = createSprite(390, 323, 10, 82);
     maze52 = createSprite(272, 285, 45, 10);
     maze53 = createSprite(255, 323, 10, 82);
-    maze54 = createSprite(322, 358, 145, 10)
+    maze54 = createSprite(322, 358, 145, 10);
 
-
-    mazes = [maze1, maze2, maze3, maze4, maze5, maze6, maze7, maze8, maze9, maze10, maze11, maze12, maze13, maze14, maze15, maze16, maze17, maze18, maze19
-      , maze20, maze21, maze22, maze23, maze24, maze25, maze26, maze27, maze28, maze29, maze30, maze31, maze32, maze33, maze34, maze35, maze36, maze37, maze38, maze39, maze40
-      , maze41, maze42, maze43, maze44, maze45, maze46, maze47, maze48, maze49, maze50, maze51, maze52, maze53, maze54]
+    mazes = [
+      maze1,
+      maze2,
+      maze3,
+      maze4,
+      maze5,
+      maze6,
+      maze7,
+      maze8,
+      maze9,
+      maze10,
+      maze11,
+      maze12,
+      maze13,
+      maze14,
+      maze15,
+      maze16,
+      maze17,
+      maze18,
+      maze19,
+      maze20,
+      maze21,
+      maze22,
+      maze23,
+      maze24,
+      maze25,
+      maze26,
+      maze27,
+      maze28,
+      maze29,
+      maze30,
+      maze31,
+      maze32,
+      maze33,
+      maze34,
+      maze35,
+      maze36,
+      maze37,
+      maze38,
+      maze39,
+      maze40,
+      maze41,
+      maze42,
+      maze43,
+      maze44,
+      maze45,
+      maze46,
+      maze47,
+      maze48,
+      maze49,
+      maze50,
+      maze51,
+      maze52,
+      maze53,
+      maze54,
+    ];
     for (var i = 0; i < 54; i++) {
-      mazes[i].visible = false
+      mazes[i].visible = false;
     }
-
+  }
+  async updateDots(i) {
+    database.ref("/").update({
+      dots: i,
+    });
   }
 }

@@ -8,7 +8,7 @@ class Player {
   }
   updateposition(x,y){
       var playerIndex = "players/player" + this.index;
-      database.ref(playerIndex).set({
+      database.ref(playerIndex).update({
         x:x,
         y:y,
       });
